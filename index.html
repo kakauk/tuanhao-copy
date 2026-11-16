@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>团号复制</title>
+<style>
+  body{margin:0;padding:14px;font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;color:#1f2329;background:#fff;font-size:13px}
+  .empty{color:#8f959e;line-height:1.7;padding:24px 4px;text-align:center}
+  .card{border:1px solid #dee0e3;border-radius:10px;padding:14px;margin-bottom:12px}
+  .label{color:#8f959e;font-size:12px}
+  .no{font-size:26px;font-weight:600;letter-spacing:1px;margin:4px 0 12px;user-select:all}
+  button{font:inherit;cursor:pointer;border-radius:6px}
+  .big{width:100%;padding:9px;background:#3370ff;color:#fff;border:0;font-size:14px;margin-bottom:8px}
+  .sec{width:100%;padding:7px;background:#fff;color:#1f2329;border:1px solid #dee0e3;margin-bottom:6px}
+  .big.ok{background:#34c724}.sec.ok,.mini.ok{color:#34c724;border-color:#34c724}
+  .row{display:flex;align-items:center;gap:8px;padding:7px 2px;border-bottom:1px solid #f0f1f2}
+  .k{color:#8f959e;width:64px;flex:none}
+  .v{flex:1;word-break:break-all}
+  .mini{flex:none;padding:2px 8px;background:#fff;border:1px solid #dee0e3;font-size:12px}
+</style>
+</head>
+<body>
+<div id="app"><div class="empty">加载中…</div></div>
+<script type="module">
+let bitable;
+async function loadSdk(){
+  const urls=['https://cdn.jsdelivr.net/npm/@lark-base-open/js-sdk@1.0.2/+esm','https://esm.sh/@lark-base-open/js-sdk@1.0.2','https://unpkg.com/@lark-base-open/js-sdk@1.0.2/dist/index.mjs?module'];
+  for(const u of urls){ try{ const m=await import(u); if(m.bitable){ bitable=m.bitable; return; } }catch(e){} }
+  throw new Error('SDK 加载失败');
+}
+
+const $ = (s) => document.querySelector(s);
+const SUMMARY = ['团号', '所属团号', '客户', '出行开始', '出行结束', '类型', '车型', '人数', '出发城市', '结束城市', '团简介'];
+let current = null; // {groupNo, customer, fields:[{name,value}]}
+
+function copyText(t, btn) {
+  const done = () => {
+    if (!btn) return;
+    const o = btn.textContent;
+    btn.textContent = '已复制 ✓';
+    btn.classList.add('ok');
+    setTimeout(() => { btn.textContent = o; btn.classList.remove('ok'); }, 1200);
+  };
+  const fallback = () => {
+    const ta = document.createElement('textarea');
+    ta.value = t; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); done(); } catch (e) { alert('复制失败，请手动选中'); }
+    ta.remove();
+  };
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(t).then(done).catch(fallback);
+  } else fallback();
+}
+
+async function load(sel) {
+  if (!sel || !sel.tableId || !sel.recordId) { render(null); return; }
+  const table = await bitable.base.getTableById(sel.tableId);
+  const metas = await table.getFieldMetaList();
+  const fields = [];
+  for (const m of metas) {
+    let v = '';
+    try { v = await table.getCellString(m.id, sel.recordId); } catch (e) { v = ''; }
+    fields.push({ name: m.name, value: (v || '').trim() });
+  }
+  const get = (n) => (fields.find((f) => f.name === n) || {}).value || '';
+  current = { groupNo: get('团号') || get('所属团号'), customer: get('客户'), fields };
+  render(current);
+}
+
+function summaryText(c) {
+  const g = (n) => (c.fields.find((f) => f.name === n) || {}).value || '';
+  const lines = [];
+  lines.push(`团号：${c.groupNo}`);
+  if (c.customer) lines.push(`客户：${c.customer}`);
+  const s = g('出行开始'), e = g('出行结束');
+  if (s) lines.push(`日期：${s}${e && e !== s ? ' – ' + e : ''}`);
+  if (g('类型')) lines.push(`类型：${g('类型')}`);
+  if (g('车型')) lines.push(`车型：${g('车型')}`);
+  if (g('人数')) lines.push(`人数：${g('人数')}`);
+  const a = g('出发城市'), b = g('结束城市');
+  if (a || b) lines.push(`路线：${a}${b ? ' → ' + b : ''}`);
+  if (g('团简介')) lines.push(`简介：${g('团简介')}`);
+  return lines.join('\n');
+}
+
+function esc(s) { return s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
+
+function render(c) {
+  if (!c || !c.groupNo) {
+    $('#app').innerHTML = `<div class="empty">在表格中点选一行（团 / 收款 / 成本），这里会显示团号和复制按钮。</div>`;
+    return;
+  }
+  const rows = c.fields
+    .filter((f) => f.value && SUMMARY.includes(f.name) && f.name !== '团号' && f.name !== '所属团号')
+    .map((f, i) => `<div class="row"><span class="k">${esc(f.name)}</span><span class="v">${esc(f.value)}</span><button class="mini" data-i="${c.fields.indexOf(f)}">复制</button></div>`)
+    .join('');
+  $('#app').innerHTML = `
+    <div class="card">
+      <div class="label">团号</div>
+      <div class="no">${esc(c.groupNo)}</div>
+      <button class="big" id="b1">复制团号</button>
+      <button class="sec" id="b2">复制 团号 + 客户</button>
+      <button class="sec" id="b3">复制整团信息</button>
+    </div>
+    <div class="list">${rows}</div>`;
+  $('#b1').onclick = (e) => copyText(c.groupNo, e.target);
+  $('#b2').onclick = (e) => copyText(c.customer ? `${c.groupNo} ${c.customer}` : c.groupNo, e.target);
+  $('#b3').onclick = (e) => copyText(summaryText(c), e.target);
+  document.querySelectorAll('.mini').forEach((b) => {
+    b.onclick = () => copyText(c.fields[+b.dataset.i].value, b);
+  });
+}
+
+(async () => {
+  try {
+    await loadSdk();
+    await load(await bitable.base.getSelection());
+    bitable.base.onSelectionChange((ev) => load(ev.data));
+  } catch (e) {
+    $('#app').innerHTML = `<div class="empty">请在飞书多维表格的插件面板中打开本页面。<br><small>${esc(String(e))}</small></div>`;
+  }
+})();
+
+</script>
+</body>
+</html>
