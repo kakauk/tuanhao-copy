@@ -3,126 +3,70 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>团号复制</title>
-<style>
-  body{margin:0;padding:14px;font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;color:#1f2329;background:#fff;font-size:13px}
-  .empty{color:#8f959e;line-height:1.7;padding:24px 4px;text-align:center}
-  .card{border:1px solid #dee0e3;border-radius:10px;padding:14px;margin-bottom:12px}
-  .label{color:#8f959e;font-size:12px}
-  .no{font-size:26px;font-weight:600;letter-spacing:1px;margin:4px 0 12px;user-select:all}
-  button{font:inherit;cursor:pointer;border-radius:6px}
-  .big{width:100%;padding:9px;background:#3370ff;color:#fff;border:0;font-size:14px;margin-bottom:8px}
-  .sec{width:100%;padding:7px;background:#fff;color:#1f2329;border:1px solid #dee0e3;margin-bottom:6px}
-  .big.ok{background:#34c724}.sec.ok,.mini.ok{color:#34c724;border-color:#34c724}
-  .row{display:flex;align-items:center;gap:8px;padding:7px 2px;border-bottom:1px solid #f0f1f2}
-  .k{color:#8f959e;width:64px;flex:none}
-  .v{flex:1;word-break:break-all}
-  .mini{flex:none;padding:2px 8px;background:#fff;border:1px solid #dee0e3;font-size:12px}
-</style>
+<title>团账助手</title>
+<style>*{box-sizing:border-box}body{margin:0;padding:12px;font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;color:#1f2329;background:#fff;font-size:13px}.empty{color:#8f959e;line-height:1.7;padding:24px 4px;text-align:center}button{font:inherit;cursor:pointer;border-radius:6px;border:1px solid #dee0e3;background:#fff;color:#1f2329;padding:6px 8px}button.pri{background:#3370ff;border-color:#3370ff;color:#fff}button.ok{background:#34c724!important;border-color:#34c724!important;color:#fff!important}.wide{width:100%;padding:9px;margin-top:8px;font-size:14px}.head{border:1px solid #dee0e3;border-radius:10px;padding:12px;margin-bottom:10px}.label{color:#8f959e;font-size:12px}.no{font-size:24px;font-weight:600;letter-spacing:.5px;margin:2px 0;user-select:all}.sub{color:#646a73;margin-bottom:10px}.btns3{display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:6px}.tabs{display:flex;border-bottom:1px solid #dee0e3;margin-bottom:10px}.tab{flex:1;text-align:center;padding:8px 0;cursor:pointer;color:#646a73}.tab.on{color:#3370ff;border-bottom:2px solid #3370ff;font-weight:600}.pills{margin-bottom:8px}.pill{display:inline-block;background:#f0f4ff;color:#3370ff;border-radius:10px;padding:2px 8px;margin-right:6px;font-size:12px}.kpis{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:12px}.kpis div{background:#f5f6f7;border-radius:8px;padding:7px 8px}.kpis span{display:block;color:#8f959e;font-size:11px}.kpis b{font-size:13px}.g{color:#2ea121}.r{color:#f54a45}.sec-h{font-weight:600;margin:12px 0 6px;display:flex;justify-content:space-between}.sec-h a{font-weight:400;color:#3370ff;cursor:pointer}.none{color:#8f959e;padding:4px 0 2px}.line{border:1px solid #eff0f1;border-radius:8px;padding:6px 8px;margin-bottom:5px;cursor:pointer}.line:hover{border-color:#3370ff}.l1{display:flex;justify-content:space-between}.l2{color:#8f959e;font-size:12px;margin-top:2px}.kv{display:flex;align-items:flex-start;gap:8px;padding:6px 0;border-bottom:1px solid #f0f1f2}.k{color:#8f959e;width:56px;flex:none}.v{flex:1;word-break:break-all;white-space:pre-wrap}.mini{flex:none;padding:1px 7px;font-size:12px}.seg{display:flex;background:#f5f6f7;border-radius:8px;padding:3px;margin-bottom:10px}.seg div{flex:1;text-align:center;padding:5px 0;border-radius:6px;cursor:pointer;color:#646a73}.seg div.on{background:#fff;color:#1f2329;font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.08)}.form label{display:block;margin-bottom:8px}.form label span{display:block;color:#646a73;font-size:12px;margin-bottom:3px}input,select,textarea{width:100%;font:inherit;padding:7px 8px;border:1px solid #dee0e3;border-radius:6px;background:#fff}input[type=checkbox]{width:auto}textarea#tpl{font-size:13px;line-height:1.55}.hint{color:#8f959e;font-size:12px;margin-top:8px;line-height:1.5}</style>
 </head>
 <body>
 <div id="app"><div class="empty">加载中…</div></div>
 <script type="module">
-let bitable;
-async function loadSdk(){
-  const urls=['https://cdn.jsdelivr.net/npm/@lark-base-open/js-sdk@1.0.2/+esm','https://esm.sh/@lark-base-open/js-sdk@1.0.2','https://unpkg.com/@lark-base-open/js-sdk@1.0.2/dist/index.mjs?module'];
-  for(const u of urls){ try{ const m=await import(u); if(m.bitable){ bitable=m.bitable; return; } }catch(e){} }
-  throw new Error('SDK 加载失败');
-}
-
-const $ = (s) => document.querySelector(s);
-const SUMMARY = ['团号', '所属团号', '客户', '出行开始', '出行结束', '类型', '车型', '人数', '出发城市', '结束城市', '团简介'];
-let current = null; // {groupNo, customer, fields:[{name,value}]}
-
-function copyText(t, btn) {
-  const done = () => {
-    if (!btn) return;
-    const o = btn.textContent;
-    btn.textContent = '已复制 ✓';
-    btn.classList.add('ok');
-    setTimeout(() => { btn.textContent = o; btn.classList.remove('ok'); }, 1200);
-  };
-  const fallback = () => {
-    const ta = document.createElement('textarea');
-    ta.value = t; ta.style.position = 'fixed'; ta.style.opacity = '0';
-    document.body.appendChild(ta); ta.select();
-    try { document.execCommand('copy'); done(); } catch (e) { alert('复制失败，请手动选中'); }
-    ta.remove();
-  };
-  if (navigator.clipboard && window.isSecureContext) {
-    navigator.clipboard.writeText(t).then(done).catch(fallback);
-  } else fallback();
-}
-
-async function load(sel) {
-  if (!sel || !sel.tableId || !sel.recordId) { render(null); return; }
-  const table = await bitable.base.getTableById(sel.tableId);
-  const metas = await table.getFieldMetaList();
-  const fields = [];
-  for (const m of metas) {
-    let v = '';
-    try { v = await table.getCellString(m.id, sel.recordId); } catch (e) { v = ''; }
-    fields.push({ name: m.name, value: (v || '').trim() });
-  }
-  const get = (n) => (fields.find((f) => f.name === n) || {}).value || '';
-  current = { groupNo: get('团号') || get('所属团号'), customer: get('客户'), fields };
-  render(current);
-}
-
-function summaryText(c) {
-  const g = (n) => (c.fields.find((f) => f.name === n) || {}).value || '';
-  const lines = [];
-  lines.push(`团号：${c.groupNo}`);
-  if (c.customer) lines.push(`客户：${c.customer}`);
-  const s = g('出行开始'), e = g('出行结束');
-  if (s) lines.push(`日期：${s}${e && e !== s ? ' – ' + e : ''}`);
-  if (g('类型')) lines.push(`类型：${g('类型')}`);
-  if (g('车型')) lines.push(`车型：${g('车型')}`);
-  if (g('人数')) lines.push(`人数：${g('人数')}`);
-  const a = g('出发城市'), b = g('结束城市');
-  if (a || b) lines.push(`路线：${a}${b ? ' → ' + b : ''}`);
-  if (g('团简介')) lines.push(`简介：${g('团简介')}`);
-  return lines.join('\n');
-}
-
-function esc(s) { return s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
-
-function render(c) {
-  if (!c || !c.groupNo) {
-    $('#app').innerHTML = `<div class="empty">在表格中点选一行（团 / 收款 / 成本），这里会显示团号和复制按钮。</div>`;
-    return;
-  }
-  const rows = c.fields
-    .filter((f) => f.value && SUMMARY.includes(f.name) && f.name !== '团号' && f.name !== '所属团号')
-    .map((f, i) => `<div class="row"><span class="k">${esc(f.name)}</span><span class="v">${esc(f.value)}</span><button class="mini" data-i="${c.fields.indexOf(f)}">复制</button></div>`)
-    .join('');
-  $('#app').innerHTML = `
-    <div class="card">
+let b;async function j(){const t=["https://cdn.jsdelivr.net/npm/@lark-base-open/js-sdk@1.0.2/+esm","https://esm.sh/@lark-base-open/js-sdk@1.0.2","https://unpkg.com/@lark-base-open/js-sdk@1.0.2/dist/index.mjs?module"];for(const n of t)try{const e=await import(n);if(e.bitable){b=e.bitable;return}}catch{}throw new Error("SDK 加载失败")}const m=t=>document.querySelector(t),u=t=>String(t??"").replace(/[&<>"]/g,n=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"})[n]),g=t=>{const n=parseFloat(String(t??"").replace(/[^0-9.\-]/g,""));return isNaN(n)?0:n},d={Text:1,Number:2,SingleSelect:3,MultiSelect:4,DateTime:5,Checkbox:7,User:11,Phone:13,SingleLink:18,Lookup:19,Formula:20,DuplexLink:21,AutoNumber:1005,Currency:99003},L=[d.Text,d.Number,d.SingleSelect,d.MultiSelect,d.DateTime,d.Checkbox,d.Phone,d.Currency];function y(t,n){const e=()=>{if(!n)return;const o=n.textContent;n.textContent="已复制 ✓",n.classList.add("ok"),setTimeout(()=>{n.textContent=o,n.classList.remove("ok")},1200)},i=()=>{const o=document.createElement("textarea");o.value=t,o.style.position="fixed",o.style.opacity="0",document.body.appendChild(o),o.select();try{document.execCommand("copy"),e()}catch{alert("复制失败，请手动选中")}o.remove()};navigator.clipboard&&window.isSecureContext?navigator.clipboard.writeText(t).then(e).catch(i):i()}function M(t,n="success"){try{b.ui.showToast({toastType:n,message:t})}catch{}}function S(t,n){return(t<0?"-":"")+n+Math.abs(t).toLocaleString("en-GB",{minimumFractionDigits:2,maximumFractionDigits:2})}function B(){const t=new Date;return`${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,"0")}-${String(t.getDate()).padStart(2,"0")}`}const a={tab:"overview",tables:{},group:null,sel:null,busy:!1};async function _(){const t=await b.base.getTableMetaList(),n={};for(const e of["团","收款","成本"]){const i=t.find(c=>c.name===e);if(!i)continue;const o=await b.base.getTableById(i.id),s=await o.getFieldMetaList();n[e]={id:i.id,table:o,fields:s}}return n}async function q(t){const n=[];let e,i=0;do{const o=await t.getRecordsByPage({pageSize:200,pageToken:e,stringValue:!0});n.push(...o.records),e=o.hasMore?o.pageToken:void 0}while(e&&++i<50);return n}function E(t,n){const e={_id:n.recordId};for(const i of t.fields){const o=n.fields[i.id];e[i.name]=o==null?"":String(o).trim()}return e}function h(t,n){return t.fields.find(e=>(e.type===d.SingleLink||e.type===d.DuplexLink)&&e.property&&e.property.tableId===n)||t.fields.find(e=>e.name==="所属团号")}async function F(t){const n=a.tables.团;if(!t||!t.tableId||!t.recordId||!n)return null;if(t.tableId===n.id)return t.recordId;const e=Object.values(a.tables).find(c=>c.id===t.tableId);if(!e)return null;const i=h(e,n.id);if(!i)return null;const s=(await e.table.getRecordById(t.recordId)).fields[i.id];return s&&s.recordIds&&s.recordIds[0]?s.recordIds[0]:null}async function x(t){const n=a.tables.团,e=await n.table.getRecordById(t),i={_id:t};for(const r of n.fields){let l="";try{l=await n.table.getCellString(r.id,t)}catch{}i[r.name]=(l||"").trim()}const o=i.团号,s={};for(const r of["收款","成本"]){const l=a.tables[r];if(!l){s[r]=[];continue}const p=h(l,n.id),f=(await q(l.table)).map(v=>E(l,v));s[r]=p?f.filter(v=>v[p.name]===o||(v[p.name]||"").split(",").map(D=>D.trim()).includes(o)):[]}const c=((i.总报价||i.主团报价||"").match(/[£$€¥]/)||["£"])[0];return{info:i,no:o,lines:s,sym:c,raw:e}}function w(t){const n=a.group;m("#app").innerHTML=`
+    <div class="head">
       <div class="label">团号</div>
-      <div class="no">${esc(c.groupNo)}</div>
-      <button class="big" id="b1">复制团号</button>
-      <button class="sec" id="b2">复制 团号 + 客户</button>
-      <button class="sec" id="b3">复制整团信息</button>
+      <div class="no">${u(n.no)}</div>
+      <div class="sub">${u(n.info.客户)}　${u(n.info.出行开始)}${n.info.出行结束&&n.info.出行结束!==n.info.出行开始?" – "+u(n.info.出行结束):""}</div>
+      <div class="btns3">
+        <button class="pri" data-copy="no">复制团号</button>
+        <button data-copy="nc">团号+客户</button>
+        <button data-act="open">打开团</button>
+      </div>
     </div>
-    <div class="list">${rows}</div>`;
-  $('#b1').onclick = (e) => copyText(c.groupNo, e.target);
-  $('#b2').onclick = (e) => copyText(c.customer ? `${c.groupNo} ${c.customer}` : c.groupNo, e.target);
-  $('#b3').onclick = (e) => copyText(summaryText(c), e.target);
-  document.querySelectorAll('.mini').forEach((b) => {
-    b.onclick = () => copyText(c.fields[+b.dataset.i].value, b);
-  });
-}
-
-(async () => {
-  try {
-    await loadSdk();
-    await load(await bitable.base.getSelection());
-    bitable.base.onSelectionChange((ev) => load(ev.data));
-  } catch (e) {
-    $('#app').innerHTML = `<div class="empty">请在飞书多维表格的插件面板中打开本页面。<br><small>${esc(String(e))}</small></div>`;
-  }
-})();
-
+    <div class="tabs">
+      ${[["overview","总览"],["ledger","记账"],["text","派车/确认单"]].map(([e,i])=>`<div class="tab ${a.tab===e?"on":""}" data-tab="${e}">${i}</div>`).join("")}
+    </div>
+    <div class="body">${t}</div>`,document.querySelectorAll("[data-tab]").forEach(e=>e.onclick=()=>{a.tab=e.dataset.tab,$()}),document.querySelector('[data-copy="no"]').onclick=e=>y(n.no,e.target),document.querySelector('[data-copy="nc"]').onclick=e=>y(n.info.客户?`${n.no} ${n.info.客户}`:n.no,e.target),document.querySelector('[data-act="open"]').onclick=()=>b.ui.showRecordDetailDialog({tableId:a.tables.团.id,recordId:n.info._id})}function $(){if(!a.group){m("#app").innerHTML='<div class="empty">在表格中点选一行（团 / 收款 / 成本），这里会显示该团的账目、记账和派车单。</div>';return}a.tab==="overview"?R():a.tab==="ledger"?P():z()}function N(t,n){for(const e of n)if(t[e]!==void 0&&t[e]!=="")return t[e];return""}function T(){const t=a.group,n=t.info,e=t.lines.收款.reduce((l,p)=>l+g(p.金额),0),i=t.lines.成本.reduce((l,p)=>l+g(p.金额),0),o=g(N(n,["总报价","主团报价"])),s=n.已收!==void 0&&n.已收!==""?g(n.已收):e,c=n.成本合计!==void 0&&n.成本合计!==""?g(n.成本合计):n.成本!==void 0&&n.成本!==""?g(n.成本):i,r=n.利润!==void 0&&n.利润!==""?g(n.利润):o-c;return{price:o,recv:s,cost:c,profit:r,unpaid:o-s}}function R(){const t=a.group,n=t.info,e=T(),i=r=>S(r,t.sym),o=[n.收款状态,n.团状态].filter(Boolean).map(r=>`<span class="pill">${u(r)}</span>`).join(""),s=e.price?Math.round(e.profit/e.price*100)+"%":"–",c=(r,l)=>{const p=t.lines[r].filter(f=>f.金额||l.some(v=>f[v]));return p.length?p.map(f=>`<div class="line" data-open="${r}:${f._id}">
+        <div class="l1"><span>${u(f.日期||"")}</span><b>${u(f.金额||"")}</b></div>
+        <div class="l2">${l.map(v=>u(f[v])).filter(Boolean).join(" · ")}</div></div>`).join(""):`<div class="none">暂无${r}记录</div>`};w(`
+    ${o?`<div class="pills">${o}</div>`:""}
+    <div class="kpis">
+      <div><span>报价</span><b>${i(e.price)}</b></div>
+      <div><span>已收</span><b class="g">${i(e.recv)}</b></div>
+      <div><span>未收</span><b class="${e.unpaid>.005?"r":""}">${i(e.unpaid)}</b></div>
+      <div><span>成本</span><b>${i(e.cost)}</b></div>
+      <div><span>利润</span><b class="${e.profit<0?"r":"g"}">${i(e.profit)}</b></div>
+      <div><span>利润率</span><b>${s}</b></div>
+    </div>
+    <div class="sec-h">收款 <a data-go="收款">+ 记一笔</a></div>
+    ${c("收款",["收款账户","经手人","备注"])}
+    <div class="sec-h">成本 <a data-go="成本">+ 记一笔</a></div>
+    ${c("成本",["类别","司机/供应商","申报人","备注"])}
+    <div class="sec-h">团信息</div>
+    ${["类型","车型","人数","出发城市","结束城市","销售","操作","排团","团简介","备注"].filter(r=>n[r]).map(r=>`<div class="kv"><span class="k">${r}</span><span class="v">${u(n[r])}</span><button class="mini" data-cp="${u(r)}">复制</button></div>`).join("")}
+  `),document.querySelectorAll("[data-cp]").forEach(r=>r.onclick=()=>y(n[r.dataset.cp],r)),document.querySelectorAll("[data-go]").forEach(r=>r.onclick=()=>{a.tab="ledger",a.ledgerKind=r.dataset.go,$()}),document.querySelectorAll("[data-open]").forEach(r=>r.onclick=()=>{const[l,p]=r.dataset.open.split(":");b.ui.showRecordDetailDialog({tableId:a.tables[l].id,recordId:p})})}function A(t){const n=a.tables.团;return t.fields.filter(e=>L.includes(e.type)&&!(e.property&&e.property.tableId===n.id)&&e.name!=="客户")}function G(t){const n="f_"+t.id;if(t.type===d.SingleSelect||t.type===d.MultiSelect){const e=t.property&&t.property.options||[];return`<select id="${n}"><option value="">—</option>${e.map(i=>`<option value="${i.id}">${u(i.name)}</option>`).join("")}</select>`}return t.type===d.DateTime?`<input id="${n}" type="date" value="${B()}">`:t.type===d.Number||t.type===d.Currency?`<input id="${n}" type="number" step="0.01" inputmode="decimal" placeholder="0.00">`:t.type===d.Checkbox?`<input id="${n}" type="checkbox">`:t.name==="备注"||t.name==="说明"?`<textarea id="${n}" rows="2"></textarea>`:`<input id="${n}" type="text">`}function I(t){const n=document.getElementById("f_"+t.id);if(!n)return;if(t.type===d.Checkbox)return n.checked;const e=n.value.trim();if(e!==""){if(t.type===d.SingleSelect){const i=t.property.options.find(o=>o.id===e);return i?{id:i.id,text:i.name}:void 0}if(t.type===d.MultiSelect){const i=t.property.options.find(o=>o.id===e);return i?[{id:i.id,text:i.name}]:void 0}if(t.type===d.DateTime){const[i,o,s]=e.split("-").map(Number);return new Date(i,o-1,s).getTime()}return t.type===d.Number||t.type===d.Currency?parseFloat(e):[{type:"text",text:e}]}}function P(){const t=a.ledgerKind||"收款",n=a.tables[t],e=n?A(n):[],i=["金额","日期","类别","司机/供应商","收款账户","经手人","申报人","备注"];e.sort((o,s)=>(i.indexOf(o.name)+1||99)-(i.indexOf(s.name)+1||99)),w(`
+    <div class="seg">${["收款","成本"].map(o=>`<div class="${o===t?"on":""}" data-kind="${o}">记${o}</div>`).join("")}</div>
+    <div class="form">
+      ${e.map(o=>`<label><span>${u(o.name)}${o.name==="金额"?" *":""}</span>${G(o)}</label>`).join("")}
+      <button class="pri wide" id="save">保存到「${t}」</button>
+      <div class="hint">团号 ${u(a.group.no)} 会自动带上。若该团已有一条空白${t}行（新建团时自动生成的），会先填进那一行。</div>
+    </div>`),document.querySelectorAll("[data-kind]").forEach(o=>o.onclick=()=>{a.ledgerKind=o.dataset.kind,$()}),m("#save").onclick=()=>K(t,e)}async function K(t,n){if(a.busy)return;const e=a.tables[t],i=a.tables.团,o=n.find(c=>c.name==="金额");if(o&&I(o)===void 0){alert("请填写金额");return}const s={};for(const c of n){const r=I(c);r!==void 0&&r!==!1&&(s[c.id]=r)}a.busy=!0,m("#save").textContent="保存中…";try{const c=a.group.lines[t].find(r=>!r.金额&&n.every(l=>!r[l.name]||l.type===d.DateTime));if(c)await e.table.setRecord(c._id,{fields:s});else{const r=h(e,i.id);r&&(s[r.id]={text:"",type:"text",recordIds:[a.group.info._id],tableId:i.id,record_ids:[a.group.info._id],table_id:i.id}),await e.table.addRecord({fields:s})}M(`已保存到「${t}」`),a.group=await x(a.group.info._id),a.tab="overview",$()}catch(c){alert("保存失败："+(c&&c.message?c.message:c)),m("#save").textContent=`保存到「${t}」`}finally{a.busy=!1}}function O(){const t=a.group.info,n=t.出行开始+(t.出行结束&&t.出行结束!==t.出行开始?" – "+t.出行结束:"");return[`【派车单】${a.group.no}`,`日期：${n}`,t.类型&&`类型：${t.类型}`,t.车型&&`车型：${t.车型}`,t.人数&&`人数：${t.人数} 人`,(t.出发城市||t.结束城市)&&`路线：${t.出发城市}${t.结束城市?" → "+t.结束城市:""}`,t.客户&&`客人：${t.客户}`,t.团简介&&`
+行程安排：
+${t.团简介}`,t.备注&&`
+备注：${t.备注}`,`
+请收到回复确认，谢谢！`].filter(Boolean).join(`
+`)}function H(t){const n=a.group,e=n.info,i=T(),o=c=>S(c,n.sym),s=e.出行开始+(e.出行结束&&e.出行结束!==e.出行开始?" – "+e.出行结束:"");return t==="en"?[`Booking Confirmation – ${n.no}`,e.客户&&`Client: ${e.客户}`,`Date: ${s}`,e.类型&&`Service: ${e.类型}`,e.车型&&`Vehicle: ${e.车型}`,e.人数&&`Passengers: ${e.人数}`,(e.出发城市||e.结束城市)&&`Route: ${e.出发城市}${e.结束城市?" → "+e.结束城市:""}`,e.团简介&&`
+Itinerary:
+${e.团简介}`,`
+Total: ${o(i.price)}`,`Paid: ${o(i.recv)}`,`Balance due: ${o(i.unpaid)}`,`
+Please quote ${n.no} as the payment reference. Thank you!`].filter(Boolean).join(`
+`):[`【行程确认单】${n.no}`,e.客户&&`客户：${e.客户}`,`出行日期：${s}`,e.类型&&`服务类型：${e.类型}`,e.车型&&`车型：${e.车型}`,e.人数&&`人数：${e.人数} 人`,(e.出发城市||e.结束城市)&&`路线：${e.出发城市}${e.结束城市?" → "+e.结束城市:""}`,e.团简介&&`
+行程说明：
+${e.团简介}`,`
+费用合计：${o(i.price)}`,`已付：${o(i.recv)}`,`待付：${o(i.unpaid)}`,`
+付款时请备注团号 ${n.no}，感谢您的信任！`].filter(Boolean).join(`
+`)}function z(){const t=a.textKind||"driver",n=t==="driver"?O():H(t==="en"?"en":"zh");w(`
+    <div class="seg">${[["driver","派车单"],["zh","确认单(中)"],["en","确认单(EN)"]].map(([e,i])=>`<div class="${e===t?"on":""}" data-tk="${e}">${i}</div>`).join("")}</div>
+    <textarea id="tpl" rows="16">${u(n)}</textarea>
+    <button class="pri wide" id="cpTpl">复制全文</button>
+    <div class="hint">可以先在框里修改再复制，修改不会保存到表格。</div>`),document.querySelectorAll("[data-tk]").forEach(e=>e.onclick=()=>{a.textKind=e.dataset.tk,$()}),m("#cpTpl").onclick=e=>y(m("#tpl").value,e.target)}let k=0;async function C(t){if(a.busy)return;const n=++k;try{const e=await F(t);if(n!==k)return;if(!e){a.group||$();return}if(a.group&&a.group.info._id===e&&a.sel===t.recordId)return;a.sel=t.recordId;const i=await x(e);if(n!==k)return;(!a.group||a.group.info._id!==e)&&(a.tab=a.tab||"overview"),a.group=i,$()}catch(e){m("#app").innerHTML=`<div class="empty">读取失败：${u(e&&e.message?e.message:e)}</div>`}}(async()=>{try{if(await j(),a.tables=await _(),!a.tables.团)throw new Error("找不到名为「团」的数据表");await C(await b.base.getSelection()),a.group||$(),b.base.onSelectionChange(t=>C(t.data))}catch(t){m("#app").innerHTML=`<div class="empty">请在飞书多维表格的插件面板中打开本页面。<br><small>${u(String(t))}</small></div>`}})();
 </script>
 </body>
 </html>
